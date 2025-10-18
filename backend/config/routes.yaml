@@ -1,0 +1,11 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+indexing_controllers:
+    resource:
+        path: ../src/Modules/Indexing/Presentation/Controller/
+        namespace: App\Modules\Indexing\Presentation\Controller
+    type: attribute

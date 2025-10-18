@@ -1,0 +1,10 @@
+services:
+    App\Tests\Shared\InMemoryVectorStore:
+        public: true
+
+    App\Modules\Indexing\Domain\Repository\VectorStore: '@App\Tests\Shared\InMemoryVectorStore'
+    App\Modules\Indexing\Infrastructure\Weaviate\WeaviateVectorStore: '@App\Tests\Shared\InMemoryVectorStore'
+
+    App\Modules\Indexing\Application\Service\EmbeddingGeneratorInterface: '@App\Tests\Shared\FakeEmbeddingGenerator'
+    App\Tests\Shared\FakeEmbeddingGenerator:
+        public: true

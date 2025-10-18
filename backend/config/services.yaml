@@ -1,0 +1,56 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    indexing.weaviate.schema:
+        class: '%env(string:WEAVIATE_CLASS)%'
+        description: 'Daily work log entries captured for CV generation.'
+        vectorizer: 'none'
+        vectorIndexConfig:
+            distance: 'cosine'
+        properties:
+            - { name: 'content', dataType: ['text'], description: 'User supplied work log narrative.' }
+            - { name: 'technologies', dataType: ['text[]'], description: 'Technologies referenced in the entry.' }
+            - { name: 'loggedAt', dataType: ['date'], description: 'Date the work was performed.' }
+            - { name: 'projectName', dataType: ['text'], description: 'Project or client associated with the work.' }
+            - { name: 'workType', dataType: ['text'], description: 'Type of work such as feature or bug fix.' }
+            - { name: 'businessImpact', dataType: ['text'], description: 'Outcome or value delivered.' }
+            - { name: 'role', dataType: ['text'], description: 'Role played while performing the work.' }
+            - { name: 'collaborators', dataType: ['text[]'], description: 'People or teams worked with.' }
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+
+    App\Modules\Indexing\Infrastructure\Weaviate\WeaviateVectorStore:
+        arguments:
+            $endpoint: '%env(string:WEAVIATE_ENDPOINT)%'
+            $className: '%env(string:WEAVIATE_CLASS)%'
+
+    App\Modules\Indexing\Infrastructure\Weaviate\WeaviateSchemaConfigurator:
+        arguments:
+            $endpoint: '%env(string:WEAVIATE_ENDPOINT)%'
+            $schemaDefinition: '%indexing.weaviate.schema%'
+
+    App\Modules\Indexing\Application\Service\EmbeddingGeneratorInterface: '@App\Modules\Indexing\Infrastructure\Ollama\OllamaEmbeddingGenerator'
+
+    App\Modules\Indexing\Infrastructure\Ollama\OllamaEmbeddingGenerator:
+        arguments:
+            $endpoint: '%env(string:OLLAMA_ENDPOINT)%'
+            $model: '%env(string:OLLAMA_EMBED_MODEL)%'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+when@test:
+    imports:
+        - { resource: services_test.yaml }
