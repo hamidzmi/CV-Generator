@@ -48,6 +48,20 @@ services:
             $endpoint: '%env(string:OLLAMA_ENDPOINT)%'
             $model: '%env(string:OLLAMA_EMBED_MODEL)%'
 
+    App\Modules\CVGeneration\Infrastructure\Weaviate\WeaviateWorkLogEntryProvider:
+        arguments:
+            $endpoint: '%env(string:WEAVIATE_ENDPOINT)%'
+            $className: '%env(string:WEAVIATE_CLASS)%'
+
+    App\Modules\CVGeneration\Application\Contract\WorkLogEntryProviderInterface: '@App\Modules\CVGeneration\Infrastructure\Weaviate\WeaviateWorkLogEntryProvider'
+
+    App\Modules\CVGeneration\Infrastructure\Ollama\OllamaChatClient:
+        arguments:
+            $endpoint: '%env(string:OLLAMA_ENDPOINT)%'
+            $model: '%env(string:OLLAMA_CV_MODEL)%'
+
+    App\Modules\CVGeneration\Application\Contract\LanguageModelInterface: '@App\Modules\CVGeneration\Infrastructure\Ollama\OllamaChatClient'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 

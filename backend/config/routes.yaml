@@ -9,3 +9,9 @@ indexing_controllers:
         path: ../src/Modules/Indexing/Presentation/Controller/
         namespace: App\Modules\Indexing\Presentation\Controller
     type: attribute
+
+cv_generation_controllers:
+    resource:
+        path: ../src/Modules/CVGeneration/Presentation/Controller/
+        namespace: App\Modules\CVGeneration\Presentation\Controller
+    type: attribute

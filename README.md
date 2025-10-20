@@ -1,13 +1,13 @@
 <div align="center">
 
-![System Diagram](images/diagram.png)
+![System Diagram](diagram.png)
 
 </div>
 
 # CV Generator
 
 Capture everyday contributions, organize them with rich context, and make them ready for tailored CVs.  
-This project keeps a record of what you worked on, why it mattered, and who you collaborated with so future CVs can be generated from actual history instead of guesswork. The **Indexing** module is live today; generation and storytelling will build on top of it next.
+This project keeps a record of what you worked on, why it mattered, and who you collaborated with so future CVs can be generated from actual history instead of guesswork. The **Indexing** module is live today and a first-pass **CV generation** workflow lets you draft the work experience section straight from your logs.
 
 ---
 
@@ -31,14 +31,13 @@ This project keeps a record of what you worked on, why it mattered, and who you 
 
 ```bash
 # 1. Start the stack (Symfony API + Weaviate + Ollama)
-docker compose up -d
+make up
 
-# 2. Pull the embedding model once (inside the Ollama container)
-docker compose exec ollama ollama pull nomic-embed-text:latest
-
-# 3. Sync the Weaviate schema (creates the work log collection)
+# 2. Sync the Weaviate schema (creates the work log collection)
 make schema-sync
 ```
+
+The `make up` helper ensures the Ollama embedding and CV models defined in `backend/.env` are available before the app boots.
 
 Visit the form UI at [http://localhost:8000/work-log/new](http://localhost:8000/work-log/new) to log an entry.
 
@@ -48,7 +47,7 @@ Visit the form UI at [http://localhost:8000/work-log/new](http://localhost:8000/
 
 | Command        | Description                                              |
 |----------------|----------------------------------------------------------|
-| `make up`      | Start services in the background                         |
+| `make up`      | Start services and pull Ollama models                     |
 | `make down`    | Stop and remove containers                               |
 | `make logs`    | Tail `symfony`, `weaviate`, and `ollama` logs             |
 | `make schema-sync` | Ensure the Weaviate `WorkLogEntry` class exists      |
@@ -58,7 +57,7 @@ Visit the form UI at [http://localhost:8000/work-log/new](http://localhost:8000/
 
 ## Usage
 
-### 1. Web Form
+### 1. Index work logs
 
 - URL: `http://localhost:8000/work-log/new`  
 - Fields: description, technologies, project, work type, role, collaborators, impact.  
@@ -69,45 +68,12 @@ Visit the form UI at [http://localhost:8000/work-log/new](http://localhost:8000/
   - Stores everything for later retrieval  
   - Flashes success/error feedback
 
-### 2. JSON API (existing)
+### 2. Generate a Work Experience Section
 
-POST `http://localhost:8000/index/work-log-entry`
-
-```json
-{
-  "entryId": "manual-123",
-  "text": "Implemented work log indexing.",
-  "technologies": ["PHP", "Symfony"],
-  "projectName": "CV Generator",
-  "workType": "feature",
-  "businessImpact": "Improved traceability for CV generation.",
-  "role": "Backend Engineer",
-  "collaborators": ["Alice"],
-  "loggedAt": "2025-10-14T12:30:00Z",
-  "embedding": [0.1, 0.2, 0.3] // optional when form is used (auto-generated)
-}
-```
-
-### 3. Inspecting Indexed Data
-
-```bash
-# List objects
-curl http://127.0.0.1:8080/v1/objects?class=WorkLogEntry
-
-# GraphQL query with metadata + vector
-curl http://127.0.0.1:8080/v1/graphql \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "query": "{ Get { WorkLogEntry { sourceEntryId projectName workType technologies businessImpact role collaborators loggedAt content _additional { id vector } } } }"
-      }'
-```
-
-If you need to reset the schema (e.g. vector dimension mismatch):
-
-```bash
-curl -X DELETE http://127.0.0.1:8080/v1/schema/WorkLogEntry
-make schema-sync
-```
+- Visit [http://localhost:8000/cv/work-experience](http://localhost:8000/cv/work-experience) to:
+  - Regenerate the section with a different entry limit.
+  - See contributions grouped by project, including the most recent year we have on record.
+  - Copy the rendered bullets straight into your resume tooling.
 
 ---
 
@@ -134,11 +100,8 @@ Tests cover:
 backend/
  ├─ src/
  │   └─ Modules/
- │       └─ Indexing/
- │            ├─ Domain/        # Entities, value objects, repositories
- │            ├─ Application/   # Commands + handlers, embedding contracts
- │            ├─ Infrastructure/# Weaviate & Ollama adapters
- │            └─ Presentation/  # HTTP controllers + console commands
+ │       ├─ Indexing/           # Capture + vectorise raw work logs
+ │       └─ CVGeneration/       # Turn indexed logs into CV-ready sections
  ├─ templates/                   # Twig views
  ├─ config/                      # Service wiring + environment-specific config
  └─ tests/                       # PHPUnit suites with test doubles
@@ -152,6 +115,8 @@ backend/
 - Introduce asynchronous pipelines so embeddings/indexing can happen off the main request.
 - Add retrieval endpoints for dashboards or reporting tools.
 - Layer authentication/authorization once more than one user starts logging entries.
+- Aggregate work logs per project to derive date ranges for each experience heading.
+- Build an editable work-experience review UI that lets users adjust/generated content, persist overrides, and optionally trigger regeneration when new logs arrive.
 
 ---
 
@@ -163,5 +128,3 @@ backend/
   Delete and recreate the Weaviate class (see above).
 - **Weaviate 404 on schema sync**  
   Run `make schema-sync` inside Docker (`docker compose exec symfony ...`).
-
-Happy indexing!

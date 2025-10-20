@@ -8,3 +8,13 @@ services:
     App\Modules\Indexing\Application\Service\EmbeddingGeneratorInterface: '@App\Tests\Shared\FakeEmbeddingGenerator'
     App\Tests\Shared\FakeEmbeddingGenerator:
         public: true
+
+    App\Tests\Modules\CVGeneration\Double\InMemoryWorkLogEntryProvider:
+        public: true
+
+    App\Modules\CVGeneration\Application\Contract\WorkLogEntryProviderInterface: '@App\Tests\Modules\CVGeneration\Double\InMemoryWorkLogEntryProvider'
+
+    App\Tests\Modules\CVGeneration\Double\FakeLanguageModel:
+        public: true
+
+    App\Modules\CVGeneration\Application\Contract\LanguageModelInterface: '@App\Tests\Modules\CVGeneration\Double\FakeLanguageModel'
